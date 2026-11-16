@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61", "wheel", "pkutils"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "art"
+version = "0.1.0"
+description = "Personal Volatility Surface Model"
+readme = "README.md"
+authors = [
+
+    { name = "James Brown", email = "jamie@gillbrown.com" }
+]
+
+
+
+dependencies = [
+    "numpy==2.4.6",
+    "pandas==3.1.0",
+    "python-dotenv==1.2.4",
+    "lse-data==3.0",
+    "seaborn==0.13.2"
+]

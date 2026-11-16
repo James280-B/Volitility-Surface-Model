@@ -1,0 +1,3 @@
+
+class SkipError(Exception):
+    pass
