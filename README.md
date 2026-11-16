@@ -35,8 +35,13 @@ Kernel-weighted (Nadaraya–Watson) estimate of implied volatility at moneyness 
 
 $$
 \sigma(m_j, \tau) =
-\frac{\displaystyle\sum_{i=1}^{N^{\ast}} k\!\left(\frac{m_j - m_i}\right)\sigma(m_i, \tau)}
-{\displaystyle\sum_{i=1}^{N^{\ast}} k\!\left(\frac{m_j - m_i}\right)}
+\frac{
+\sum_{i=1}^{N^{\ast}}
+k\left(m_j - m_i\right)\sigma(m_i, \tau)
+}{
+\sum_{i=1}^{N^{\ast}}
+k\left(m_j - m_i\right)
+}
 $$
 
 ## Features
