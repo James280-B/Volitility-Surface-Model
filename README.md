@@ -28,7 +28,7 @@ $$
 Kernel bandwidth for expiry $\tau$:
 
 $$ 
-h(\tau) = 0.75 \, \Delta K(\tau) 
+h(\tau) = 0.75 \Delta K(\tau) 
 $$
 
 Kernel-weighted (Nadaraya–Watson) estimate of implied volatility at moneyness $m_j$ for expiry $\tau$:
