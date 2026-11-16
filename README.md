@@ -45,6 +45,7 @@ k\left(m_j - m_i\right)
 $$
 
 The kernel used is: 
+
 $$
 k(x)=\frac{1}{\sqrt{2\pi}}
 \exp\left(-\frac{x^2}{2h_x}\right)
