@@ -17,9 +17,6 @@ class RiskFreeRate:
         tenor_yrs = curve_data_df["days"] / 365
         par_rates = curve_data_df["rate"]
 
-        print(tenor_yrs)
-        print(par_rates)
-
         rf = np.interp(tmt_yrs, tenor_yrs, par_rates)
 
         return rf

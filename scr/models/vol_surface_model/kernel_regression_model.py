@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import logging
 
 from math import pi, sqrt, exp
 
@@ -13,6 +14,8 @@ class OneDKernelRegressionModel:
             total_data_sets_dd: dict,
             estimation_step_freq: float,
     ) -> None:
+        self.logger = logging.getLogger(__name__)
+        self.total_data_sets_dd = total_data_sets_dd
         self.total_data_sets_dd = total_data_sets_dd
         self.estimation_step_freq = estimation_step_freq
         self._num_days = len(total_data_sets_dd)
@@ -24,7 +27,6 @@ class OneDKernelRegressionModel:
         csv = CSVHandler()
 
         for df in self.total_data_sets_dd.values():
-            print(f"length of input df is {len(df)}")
             implied_vol_output_df = pd.DataFrame(columns=["estimated_iv", "moneyness", "dte"])
 
             estimation_targets = np.arange(0.8, 1.2, self.estimation_step_freq)
@@ -33,13 +35,16 @@ class OneDKernelRegressionModel:
             try:
                 implied_vol_output_df["estimated_iv"] = estimation_targets_ss.apply(self._compute_single_vol_point,
                                                                                     input_data_df=df)
-            except SkipError:
+            except SkipError as sk:
+                self.logger.info("Exception occurred: %s", str(sk))
                 continue
 
             implied_vol_output_df["moneyness"] = estimation_targets_ss
             implied_vol_output_df["dte"] = round(df["dte_call"].values[0] / 365, 3)
 
             total_output_df = pd.concat([total_output_df, implied_vol_output_df], axis=0)
+
+            self.logger.info("completed estimating implied vol")
 
         csv.save_model_output(output_df=total_output_df)
 
@@ -53,7 +58,7 @@ class OneDKernelRegressionModel:
         _n_obv_t = len(input_data_df)  # data is inputted in put call pairs
 
         if _n_obv_t <= 1:
-            raise SkipError("Skipping maturities <= 1")
+            raise SkipError("Skipping when num maturities <= 1")
 
         ave_dis_k = (max_strike - min_strike) / (_n_obv_t - 1)
         bw = self._BW_CONST * ave_dis_k
@@ -63,6 +68,7 @@ class OneDKernelRegressionModel:
         try:
             exp_comp = exp(-(input_variable ** 2) / (2 * bw))
         except ZeroDivisionError:
+            self.logger.info("ZeroDivisionError")
             exp_comp = 1  # TODO FIND BETTER FIX
         output = gaussian_const * exp_comp
         return output
@@ -112,5 +118,4 @@ class OneDKernelRegressionModel:
             estimation_target=estimation_target,
         )
         single_vol = np.dot(weights_ls, total_iv_ls)
-
         return single_vol

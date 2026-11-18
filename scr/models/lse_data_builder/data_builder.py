@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import datetime as dt
+import logging
 
 from typing import cast
 
@@ -14,8 +15,7 @@ from scr.utils.pairs_data_row import PairsDataRow
 
 class LSEDataBuilder:
     def __init__(self) -> None:
-        pass
-
+        self.logger = logging.getLogger(__name__)
     def build_input_data(
             self,
             set_type: str,
@@ -35,9 +35,8 @@ class LSEDataBuilder:
                 end_date=end_date,
             )
             if raw_data_df.empty:
-                print(len(raw_data_df))
                 continue
-            print("data successfully requested")
+            self.logger.info("Request LSE data from {} to {}".format(start_date, end_date))
 
             cleaned_unfiltered_df = self._clean_raw_options_flow_data(raw_data_df=raw_data_df)
             filtered_df = self._filter_non_arb_options(cleaned_data_df=cleaned_unfiltered_df)
@@ -48,9 +47,8 @@ class LSEDataBuilder:
             start_date = compute_utc_dates(lse_params_dd["start"] + 1)
             end_date = compute_utc_dates(lse_params_dd["end"] + 1)
 
-        print(len(input_data_df))
         csv.save_input_data(input_data_df)
-        print("input data successfully created")
+        self.logger.info("Input data successfully created")
 
     @staticmethod
     def _clean_raw_options_flow_data(raw_data_df: pd.DataFrame) -> pd.DataFrame:
@@ -84,7 +82,7 @@ class LSEDataBuilder:
     def _compute_time_diff(df: pd.DataFrame) -> pd.Series:
         time_diff_ss = abs(df["ts_call"] - df["ts_put"])
         if time_diff_ss.empty:
-            raise SkipError("non abitrage compliant")
+            raise SkipError("time diff empty")
 
         return time_diff_ss
 
@@ -130,20 +128,19 @@ class LSEDataBuilder:
 
             tmt_yrs = daily_data_df["dte"].values[0] / 365
             rf = RiskFreeRate.compute(tmt_yrs=tmt_yrs)
-            print(f"risk free rate: {rf}")
 
             try:
                 daily_put_call_pairs_df = self._find_daily_put_call_pairs(daily_data_df)
-            except SkipError:
-                print("loop skipped")
-                continue  # TODO LOG WHAT IS BEING SKIPPED AND WHY / WHEN
+            except SkipError as sk:
+                self.logger.info("Exception occurred: %s", str(sk))
+                continue
 
             fin_maths_utils = FinUtils(tmt_yrs=tmt_yrs, rf_rate=rf)
             moneyness_df = fin_maths_utils.compute_moneyness(df=daily_put_call_pairs_df)
             daily_put_call_pairs_df = daily_put_call_pairs_df.join(moneyness_df)
             daily_div_yield = fin_maths_utils.compute_daily_continuous_div(df=daily_put_call_pairs_df)
 
-            for row in daily_put_call_pairs_df.itertuples(index=True):  # TODO POSSIBLE SERIES INPUT NEEDED
+            for row in daily_put_call_pairs_df.itertuples(index=True):
                 idx += 1
                 if not fin_maths_utils.is_arbitrage_compliant_single(row=cast(PairsDataRow, row),
                                                                      div_yield=daily_div_yield):  # TODO MAKE MORE EFFICIENT

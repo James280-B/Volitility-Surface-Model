@@ -74,5 +74,4 @@ def is_in_filtered_cols(col_name: str) -> bool:
 
 def compute_utc_dates(num_days: int) -> str:
     date = (datetime.now(timezone.utc) - timedelta(days=num_days)).strftime("%Y-%m-%d")
-    print(date)
     return date
