@@ -5,7 +5,7 @@ import datetime as dt
 from typing import cast
 
 from scr.utils.csv_handler import CSVHandler
-from scr.utils.data_params import get_lse_request_params, compute_utc_dates, is_in_filtered_cols
+from scr.parameters.data_params import get_lse_request_params, compute_utc_dates, is_in_filtered_cols
 from scr.utils.fin_utils import FinUtils
 from scr.utils.errors import SkipError
 from scr.instruments.risk_free_rate import RiskFreeRate

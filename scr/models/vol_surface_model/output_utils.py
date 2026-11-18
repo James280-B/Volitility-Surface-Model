@@ -105,6 +105,6 @@ class OutputUtils:
         ax.grid(True, alpha=0.3)
 
         plt.tight_layout()
-        plt.savefig("C:/repos/personal/python_projects/option_vol_surface/data/outputs/vol_surface.pdf")
+        plt.savefig("/data/outputs/vol_surface.pdf")
 
 
