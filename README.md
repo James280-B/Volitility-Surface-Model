@@ -85,10 +85,10 @@ improvements.
 
 - [X] 1D kernel regression model
 - [X] large data collection (LSE)
+- [X] Logging and error management
 
 ### In Progress
 
-- [ ] Logging and error management
 - [ ] Full range DTE data collection
 - [ ] Improving model computational performance
 
