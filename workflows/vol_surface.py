@@ -1,7 +1,10 @@
 from scr.lse_data_builder.data_builder import LSEDataBuilder
+from scr.utils.csv_handler import CSVHandler
 from scr.vol_surface_model.kernel_regression_model import OneDKernelRegressionModel
 
 data = LSEDataBuilder()
+csv = CSVHandler()
+
 data.build_input_data(set_type="input")
 
 options_data_df = csv.read_input_model_data()

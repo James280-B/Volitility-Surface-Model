@@ -27,9 +27,6 @@ class OneDKernelRegressionModel:
             print(f"length of input df is {len(df)}")
             implied_vol_output_df = pd.DataFrame(columns=["estimated_iv", "moneyness", "dte"])
 
-            #min_moneyness = round(min(df["moneyness_call"].tolist() + df["moneyness_put"].tolist()), 3)
-            #max_moneyness = round(max(df["moneyness_call"].tolist() + df["moneyness_put"].tolist()), 3)
-
             estimation_targets = np.arange(0.8, 1.2, self.estimation_step_freq)
             estimation_targets_ss = pd.Series(estimation_targets)
 
