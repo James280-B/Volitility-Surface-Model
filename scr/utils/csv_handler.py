@@ -76,10 +76,10 @@ class CSVHandler:
         folder_path = os.path.join(self.INPUT_MODEL_DATA_PATH, file_name)
         df.to_csv(folder_path, index=False)
 
-    @staticmethod
-    def produce_data_summary(
+    def save_data_summary(
+            self,
             input_df: pd.DataFrame,
-    ) -> dict:
+    ) -> None:
         total_maturities = input_df["dte_call"].nunique()
         total_strikes = input_df["strike"].nunique()
 
@@ -90,4 +90,7 @@ class CSVHandler:
             "num_maturities": total_maturities,
         }
 
-        return data_summary_dd
+        df = pd.DataFrame(data_summary_dd, index=[0])
+        folder_path = os.path.join(self.INPUT_MODEL_DATA_PATH, "data_summary.csv")
+
+        df.to_csv(folder_path, index=False)

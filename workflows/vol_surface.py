@@ -7,11 +7,10 @@ setup_logger()
 data = LSEDataBuilder()
 csv = CSVHandler()
 
-data.build_input_data(set_type="test")
+data.build_input_data(set_type="input")
 
 options_data_df = csv.read_input_model_data()
-summary_dd = csv.produce_data_summary(options_data_df)
-print(summary_dd)
+csv.save_data_summary(options_data_df)
 
 grouped_dte_data_dd = {
     dte: group
@@ -20,3 +19,4 @@ grouped_dte_data_dd = {
 
 kernel_regression_model = OneDKernelRegressionModel(total_data_sets_dd=grouped_dte_data_dd, estimation_step_freq=0.01)
 kernel_regression_model.run()
+print("completed vol surface model")

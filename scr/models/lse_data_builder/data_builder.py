@@ -35,6 +35,7 @@ class LSEDataBuilder:
                 end_date=end_date,
             )
             if raw_data_df.empty:
+                self.logger.warning("No data found for requested date")
                 continue
             self.logger.info("Request LSE data from {} to {}".format(start_date, end_date))
 

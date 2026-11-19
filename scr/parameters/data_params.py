@@ -8,7 +8,7 @@ def get_lse_request_params(set_type: str) -> dict:
         "num_requests": 1,
         "underlying": "AAPL",
         "type": None,
-        "min_premium": 250000,
+        "min_premium": 1000,
         "max_dte": None,
         "start": 14,
         "end": 13,
