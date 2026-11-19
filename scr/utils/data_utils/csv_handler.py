@@ -13,6 +13,7 @@ class CSVHandler:
         self.OUTPUT_MODEL_PATH = read_environment_variables("OUTPUT_MODEL_PATH")
         self.RAW_LSE_DATA_PATH = read_environment_variables("RAW_LSE_DATA_PATH")
         self._OIS_CURVE_DATA_PATH = read_environment_variables("OIS_CURVE_DATA_PATH")
+        self._TEST_DATA_PATH = read_environment_variables("TEST_DATA_PATH")
 
         self._OUTPUT_FILE_NAME = "okr_iv_output"
         self._INPUT_DATA_FILE_NAME = "input_data"
@@ -52,13 +53,25 @@ class CSVHandler:
 
         return df
 
-    def read_ois_data_json(self) -> pd.DataFrame:
-        file_name = f"{self._OIS_CURVE_DATA_FILE_NAME}.json"
+    def read_ois_data_json(
+            self,
+            file_tag: str
+    ) -> pd.DataFrame:
+        file_name = f"{self._OIS_CURVE_DATA_FILE_NAME}_{file_tag}.json"
         folder_path = os.path.join(self._OIS_CURVE_DATA_PATH, file_name)
         df = pd.read_json(folder_path)
         curve_ls = df["curve"].tolist()
         output_df = pd.DataFrame(curve_ls)
         return output_df
+
+    def read_test_data_csv(
+            self,
+            test_name: str
+    ) -> pd.DataFrame:
+        folder_path = os.path.join(self._TEST_DATA_PATH, test_name)
+        df = pd.read_csv(folder_path)
+
+        return df
 
     def save_model_output(
             self,
@@ -76,6 +89,15 @@ class CSVHandler:
         folder_path = os.path.join(self.INPUT_MODEL_DATA_PATH, file_name)
         df.to_csv(folder_path, index=False)
 
+    def save_test_data(
+            self,
+            df: pd.DataFrame,
+    ) -> None:
+        file_name = "test.csv"
+        folder_path = os.path.join(self._TEST_DATA_PATH, file_name)
+
+        df.to_csv(folder_path, index=False)
+
     def save_data_summary(
             self,
             input_df: pd.DataFrame,
@@ -88,6 +110,8 @@ class CSVHandler:
             "num_obvs": input_df.shape[0] * 2,
             "num_strikes": total_strikes,
             "num_maturities": total_maturities,
+            "min strike": min(input_df["strike"]),
+            "max strike": max(input_df["strike"]),
         }
 
         df = pd.DataFrame(data_summary_dd, index=[0])

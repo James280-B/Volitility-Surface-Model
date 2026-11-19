@@ -6,7 +6,7 @@ import statsmodels.api as sm
 
 from math import pi, sqrt, exp
 
-from scr.utils.csv_handler import CSVHandler
+from scr.utils.data_utils.csv_handler import CSVHandler
 from scr.utils.errors import SkipError
 
 
@@ -25,7 +25,7 @@ class OneDKernelRegressionModel:
     def run(self):
         csv = CSVHandler()
         total_output_df = pd.DataFrame(columns=["estimated_iv", "moneyness", "dte"])
-        estimation_targets = np.arange(0.8, 1.2, self.estimation_step_freq)
+        estimation_targets = np.arange(0.4, 1.6, self.estimation_step_freq)
         estimation_targets_ss = pd.Series(estimation_targets)
 
         for df in self.total_data_sets_dd.values():
@@ -43,7 +43,6 @@ class OneDKernelRegressionModel:
             if ave_dis_k == 0:
                 self.logger.warning("ave_dis_k is 0: only one strike in set")
                 ave_dis_k = 0.2
-
 
             implied_iv_np = df["iv_put"].to_list() + df["iv_call"].to_list()
             moneyness_np = df["moneyness_call"].to_list() + df["moneyness_put"].to_list()

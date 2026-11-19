@@ -17,10 +17,10 @@ def get_lse_request_params(set_type: str) -> dict:
     }
 
     input_dd = {
-        "num_requests": 1,
+        "num_requests": 2,
         "underlying": "AAPL",
         "type": None,
-        "min_premium": 1000,
+        "min_premium": 100,
         "max_dte": None,
         "start": 14,
         "end": 13,
@@ -32,12 +32,24 @@ def get_lse_request_params(set_type: str) -> dict:
         "num_requests": 3,
         "underlying": "AAPL",
         "type": None,
-        "min_premium": 1000,
+        "min_premium": 100,
         "max_dte": None,
         "start": 14,
         "end": 13,
         "limit": 5000,  # the max limit for single request
         "min_dte": None,
+    }
+
+    test_dd = {
+        "num_requests": 1,
+        "underlying": "AAPL",
+        "type": None,
+        "min_premium": 100,
+        "max_dte": 45,
+        "start": 14,
+        "end": 13,
+        "limit": 5000,  # the max limit for single request
+        "min_dte": 25,
     }
 
     if set_type == "test":
@@ -46,6 +58,8 @@ def get_lse_request_params(set_type: str) -> dict:
         output_dd = input_dd
     elif set_type == "large":
         output_dd = large_dd
+    elif set_type == "test":
+        output_dd = test_dd
 
     return output_dd
 

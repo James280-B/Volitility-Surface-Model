@@ -5,8 +5,8 @@ import logging
 
 from typing import cast
 
-from scr.utils.csv_handler import CSVHandler
-from scr.parameters.data_params import get_lse_request_params, compute_utc_dates, is_in_filtered_cols
+from scr.utils.data_utils.csv_handler import CSVHandler
+from scr.parameters.data_builder_params import get_lse_request_params, compute_utc_dates, is_in_filtered_cols
 from scr.utils.fin_utils import FinUtils
 from scr.utils.errors import SkipError
 from scr.instruments.risk_free_rate import RiskFreeRate
@@ -16,6 +16,7 @@ from scr.utils.pairs_data_row import PairsDataRow
 class LSEDataBuilder:
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
+
     def build_input_data(
             self,
             set_type: str,
@@ -25,8 +26,10 @@ class LSEDataBuilder:
         input_data_df = pd.DataFrame()
         lse_params_dd = get_lse_request_params(set_type)
 
-        start_date = compute_utc_dates(lse_params_dd["start"])
-        end_date = compute_utc_dates(lse_params_dd["end"])
+        start_int = lse_params_dd['start']
+        end_int = lse_params_dd['end']
+        start_date = compute_utc_dates(start_int)
+        end_date = compute_utc_dates(end_int)
 
         for i in range(lse_params_dd["num_requests"]):
             raw_data_df = csv.request_lse_raw_options_flow_to_csv(
@@ -45,10 +48,16 @@ class LSEDataBuilder:
             input_data_df_single_request = self._clean_filtered_data(filtered_data_df=filtered_df)
             input_data_df = pd.concat([input_data_df, input_data_df_single_request])
 
-            start_date = compute_utc_dates(lse_params_dd["start"] + 1)
-            end_date = compute_utc_dates(lse_params_dd["end"] + 1)
+            start_int += 1
+            end_int += 1
 
-        csv.save_input_data(input_data_df)
+            start_date = compute_utc_dates(start_int)
+            end_date = compute_utc_dates(end_int)
+
+        if set_type == "test":
+            csv.save_test_data(input_data_df)
+        else:
+            csv.save_input_data(input_data_df)
         self.logger.info("Input data successfully created")
 
     @staticmethod
@@ -127,8 +136,12 @@ class LSEDataBuilder:
             dropped_rows = list()
             idx = -1  # TODO FIND BETTER METHOD THAN THIS
 
+            dates = cleaned_data_df["ts"].dt.date
+            date_single = dates.values[0]
+            date_str = date_single.strftime("%Y-%m-%d")
+
             tmt_yrs = daily_data_df["dte"].values[0] / 365
-            rf = RiskFreeRate.compute(tmt_yrs=tmt_yrs)
+            rf = RiskFreeRate.compute(tmt_yrs=tmt_yrs, date=date_str)
 
             try:
                 daily_put_call_pairs_df = self._find_daily_put_call_pairs(daily_data_df)

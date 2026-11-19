@@ -44,7 +44,10 @@ class FinUtils:
         total_rows = len(df)
 
         for row in df.itertuples(index=False):
-            con_div += self._compute_continuous_div_single(row=cast(PairsDataRow, row))
+            try:
+                con_div += self._compute_continuous_div_single(row=cast(PairsDataRow, row))
+            except ValueError:
+                continue
             con_div = con_div / total_rows
 
         return con_div

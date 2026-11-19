@@ -1,6 +1,6 @@
 import numpy as np
 
-from scr.utils.csv_handler import CSVHandler
+from scr.utils.data_utils.csv_handler import CSVHandler
 
 
 class RiskFreeRate:
@@ -10,9 +10,12 @@ class RiskFreeRate:
         pass
 
     @staticmethod
-    def compute(tmt_yrs: float) -> float:
+    def compute(
+            tmt_yrs: float,
+            date: str
+    ) -> float:
         csv = CSVHandler()
-        curve_data_df = csv.read_ois_data_json()
+        curve_data_df = csv.read_ois_data_json(file_tag=date)
 
         tenor_yrs = curve_data_df["days"] / 365
         par_rates = curve_data_df["rate"]
