@@ -2,7 +2,7 @@ import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
 
-from scr.utils.data_utils.csv_handler import CSVHandler
+from scr.utils.csv_handler import CSVHandler
 
 
 class OutputUtils:

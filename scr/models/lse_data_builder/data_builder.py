@@ -5,9 +5,9 @@ import logging
 
 from typing import cast
 
-from scr.utils.data_utils.csv_handler import CSVHandler
+from scr.utils.csv_handler import CSVHandler
 from scr.parameters.data_builder_params import get_lse_request_params, compute_utc_dates, is_in_filtered_cols
-from scr.utils.fin_utils import FinUtils
+from scr.utils.fin_utils import Finance
 from scr.utils.errors import SkipError
 from scr.instruments.risk_free_rate import RiskFreeRate
 from scr.utils.pairs_data_row import PairsDataRow
@@ -55,6 +55,10 @@ class LSEDataBuilder:
             end_date = compute_utc_dates(end_int)
 
         if set_type == "test":
+            input_data_df = input_data_df.drop(
+                columns=["delta_call", "gamma_call", "theta_call", "underlying_price_call", "vega_call",
+                         "delta_put", "gamma_put", "theta_put", "ts_put", "underlying_price_put", "vega_put",
+                         "dte_call", "expiry_call", "ticker_call", "dte_put", "expiry_put", "ticker_put"])
             csv.save_test_data(input_data_df)
         else:
             csv.save_input_data(input_data_df)
@@ -85,7 +89,7 @@ class LSEDataBuilder:
         else:
             all_pairs_df = pd.merge(calls_df, puts_df, how="inner", on=["strike"], suffixes=["_call", "_put"])
             output_df = self._filter_pairs_on_constraints(all_pairs_df)
-        output_df.reset_index(drop=True, inplace=True)
+        output_df.reset_index(drop=True, inplace=True)  # TODO REMOVE DUPLICATED COLS WHERE NECESSARY
         return output_df
 
     @staticmethod
@@ -149,7 +153,7 @@ class LSEDataBuilder:
                 self.logger.info("Exception occurred: %s", str(sk))
                 continue
 
-            fin_maths_utils = FinUtils(tmt_yrs=tmt_yrs, rf_rate=rf)
+            fin_maths_utils = Finance(tmt_yrs=tmt_yrs, rf_rate=rf)
             moneyness_df = fin_maths_utils.compute_moneyness(df=daily_put_call_pairs_df)
             daily_put_call_pairs_df = daily_put_call_pairs_df.join(moneyness_df)
             daily_div_yield = fin_maths_utils.compute_daily_continuous_div(df=daily_put_call_pairs_df)

@@ -6,71 +6,94 @@ import statsmodels.api as sm
 
 from math import pi, sqrt, exp
 
-from scr.utils.data_utils.csv_handler import CSVHandler
+from scr.utils.csv_handler import CSVHandler
 from scr.utils.errors import SkipError
+from scr.utils.maths_utils import Maths
 
 
 class OneDKernelRegressionModel:
     def __init__(
             self,
-            total_data_sets_dd: dict,
-            estimation_step_freq: float,
+            input_data_df: pd.DataFrame,
     ) -> None:
         self.logger = logging.getLogger(__name__)
-        self.total_data_sets_dd = total_data_sets_dd
-        self.estimation_step_freq = estimation_step_freq
+        self.df = input_data_df
         self._BW_CONST = 0.75  # values between [0.6, 1]
         # as stated in "Option-implied information: What’s the vol surface got to do with it?" (2020):
 
-    def run(self):
+    def test(
+            self,
+            output_df: pd.DataFrame,
+            test_df: pd.DataFrame,
+            save: bool,
+            test_tag: str
+    ) -> dict:
         csv = CSVHandler()
-        total_output_df = pd.DataFrame(columns=["estimated_iv", "moneyness", "dte"])
-        estimation_targets = np.arange(0.4, 1.6, self.estimation_step_freq)
-        estimation_targets_ss = pd.Series(estimation_targets)
 
-        for df in self.total_data_sets_dd.values():
-            implied_vol_output_df = pd.DataFrame(columns=["estimated_iv", "moneyness", "dte"])
+        actual_ls = test_df["iv_call"].to_list() + test_df["iv_put"].to_list()
+        actual_np = np.array(actual_ls)
+        estimated_np = output_df["estimated_iv"].to_numpy()
 
-            min_strike = min(df["strike"])
-            max_strike = max(df["strike"])
-            _n_obv_t = len(df) * 2  # data is inputted in put call pairs
+        mh = Maths(actual=actual_np, predicted=estimated_np)
 
-            if _n_obv_t <= 1:
-                raise SkipError("Skipping when num maturities <= 1")
+        test_output_dd = {
+            "mae": mh.compute_mae(),
+            "mse": mh.compute_mse(),
+            "rmse": mh.compute_rmse(),
+            "r2": mh.compute_r2(),
+        }
 
-            ave_dis_k = (max_strike - min_strike) / (_n_obv_t - 1)
+        self.logger.info("computed test results")
 
-            if ave_dis_k == 0:
-                self.logger.warning("ave_dis_k is 0: only one strike in set")
-                ave_dis_k = 0.2
+        if save:
+            df = pd.DataFrame(test_output_dd, index=[0])
+            csv.save_test_output_summary(df=df, test_tag=test_tag)
+        return test_output_dd
 
-            implied_iv_np = df["iv_put"].to_list() + df["iv_call"].to_list()
-            moneyness_np = df["moneyness_call"].to_list() + df["moneyness_put"].to_list()
+    def run(
+            self,
+            input_moneyness: float | list,
+    ) -> pd.DataFrame:
 
-            extrapolated_data = self._compute_tail_extrapolation(delta_k=ave_dis_k, implied_iv_ls=implied_iv_np,
-                                                                 moneyness_ls=moneyness_np)
+        estimation_targets_ss = pd.Series(input_moneyness)
 
-            input_data_dd = {
-                "ave_dis_k": ave_dis_k,
-                "total_iv_arr": extrapolated_data[0],
-                "total_moneyness_arr": extrapolated_data[1],
-            }
+        implied_vol_output_df = pd.DataFrame(columns=["estimated_iv", "moneyness", "dte"])
 
-            try:
-                implied_vol_output_df["estimated_iv"] = estimation_targets_ss.apply(self._compute_single_vol_point,
-                                                                                    input_data_dd=input_data_dd)
-            except SkipError as sk:
-                self.logger.info("Exception occurred: %s", str(sk))
-                continue
+        min_strike = min(self.df["strike"])
+        max_strike = max(self.df["strike"])
+        _n_obv_t = len(self.df) * 2  # data is inputted in put call pairs
 
-            implied_vol_output_df["moneyness"] = estimation_targets_ss
-            implied_vol_output_df["dte"] = round(df["dte_call"].values[0] / 365, 3)
+        if _n_obv_t <= 1:
+            raise SkipError("Skipping when num maturities <= 1")
 
-            total_output_df = pd.concat([total_output_df, implied_vol_output_df], axis=0)
+        ave_dis_k = (max_strike - min_strike) / (_n_obv_t - 1)
 
-            self.logger.info("completed model run")
+        if ave_dis_k == 0:
+            self.logger.warning("ave_dis_k is 0: only one strike in set")
+            ave_dis_k = 0.2
 
-        csv.save_model_output(output_df=total_output_df)
+        implied_iv_np = self.df["iv_put"].to_list() + self.df["iv_call"].to_list()
+        moneyness_np = self.df["moneyness_call"].to_list() + self.df["moneyness_put"].to_list()
+
+        extrapolated_data = self._compute_tail_extrapolation(delta_k=ave_dis_k, implied_iv_ls=implied_iv_np,
+                                                             moneyness_ls=moneyness_np)
+
+        input_data_dd = {
+            "ave_dis_k": ave_dis_k,
+            "total_iv_arr": extrapolated_data[0],
+            "total_moneyness_arr": extrapolated_data[1],
+        }
+
+        implied_vol_output_df["estimated_iv"] = estimation_targets_ss.apply(self._compute_single_vol_point,
+                                                                            input_data_dd=input_data_dd)
+
+        implied_vol_output_df["moneyness"] = estimation_targets_ss
+        # implied_vol_output_df["dte"] = round(self.df["dte_call"].values[0] / 365, 3)  #TODO FINISH THIS
+        implied_vol_output_df["estimated_iv"] = round(implied_vol_output_df["estimated_iv"], 4)
+
+        self.logger.info("completed model run")
+
+        return implied_vol_output_df
 
     def _define_kernel_func(
             self,
@@ -139,8 +162,6 @@ class OneDKernelRegressionModel:
 
         const_left_moneyness_ls = sm.add_constant(left_tail_moneyness, has_constant="add")
         const_right_tail_moneyness = sm.add_constant(right_tail_moneyness, has_constant="add")
-
-        print()
 
         simple_regression_model_left = lm.OLS(left_tail_iv, const_left_moneyness_ls)
         simple_regression_model_right = lm.OLS(right_tail_iv, const_right_tail_moneyness)

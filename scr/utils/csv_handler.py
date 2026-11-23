@@ -18,6 +18,7 @@ class CSVHandler:
         self._OUTPUT_FILE_NAME = "okr_iv_output"
         self._INPUT_DATA_FILE_NAME = "input_data"
         self._OIS_CURVE_DATA_FILE_NAME = "ois_curve_data"
+        self._TEST_OUTPUT_FILE_NAME = "test_output"
 
     def request_lse_raw_options_flow_to_csv(
             self,
@@ -94,6 +95,16 @@ class CSVHandler:
             df: pd.DataFrame,
     ) -> None:
         file_name = "test.csv"
+        folder_path = os.path.join(self._TEST_DATA_PATH, file_name)
+
+        df.to_csv(folder_path, index=False)
+
+    def save_test_output_summary(
+            self,
+            df: pd.DataFrame,
+            test_tag: str,
+    ) -> None:
+        file_name = f"{self._TEST_OUTPUT_FILE_NAME}_{test_tag}.csv"
         folder_path = os.path.join(self._TEST_DATA_PATH, file_name)
 
         df.to_csv(folder_path, index=False)

@@ -4,27 +4,15 @@ from datetime import datetime, timedelta, timezone
 def get_lse_request_params(set_type: str) -> dict:
     output_dd = dict
 
-    test_dd = {
-        "num_requests": 1,
-        "underlying": "AAPL",
-        "type": None,
-        "min_premium": 1000,
-        "max_dte": None,
-        "start": 14,
-        "end": 13,
-        "limit": 1000,
-        "min_dte": None,
-    }
-
     input_dd = {
         "num_requests": 2,
         "underlying": "AAPL",
         "type": None,
         "min_premium": 100,
         "max_dte": None,
-        "start": 14,
-        "end": 13,
-        "limit": 5000,  # the max limit for single request
+        "start": 21,
+        "end": 20,
+        "limit": 5000,  # 1 - 5000
         "min_dte": None,
     }
 
@@ -36,7 +24,7 @@ def get_lse_request_params(set_type: str) -> dict:
         "max_dte": None,
         "start": 14,
         "end": 13,
-        "limit": 5000,  # the max limit for single request
+        "limit": 5000,  # 1 - 5000
         "min_dte": None,
     }
 
@@ -44,12 +32,12 @@ def get_lse_request_params(set_type: str) -> dict:
         "num_requests": 1,
         "underlying": "AAPL",
         "type": None,
-        "min_premium": 100,
-        "max_dte": 45,
-        "start": 14,
-        "end": 13,
-        "limit": 5000,  # the max limit for single request
-        "min_dte": 25,
+        "min_premium": 10,
+        "max_dte": None,
+        "start": 6,
+        "end": 5,
+        "limit": 2000, # 1 - 5000
+        "min_dte": 100,
     }
 
     if set_type == "test":
@@ -58,8 +46,6 @@ def get_lse_request_params(set_type: str) -> dict:
         output_dd = input_dd
     elif set_type == "large":
         output_dd = large_dd
-    elif set_type == "test":
-        output_dd = test_dd
 
     return output_dd
 

@@ -5,7 +5,7 @@ from typing import cast
 from scr.utils.pairs_data_row import PairsDataRow
 
 
-class FinUtils:
+class Finance:
 
     def __init__(
             self,
