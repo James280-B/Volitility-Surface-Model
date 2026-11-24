@@ -1,6 +1,3 @@
-from datetime import datetime, timedelta, timezone
-
-
 def get_lse_request_params(set_type: str) -> dict:
     output_dd = dict
 
@@ -22,8 +19,8 @@ def get_lse_request_params(set_type: str) -> dict:
         "type": None,
         "min_premium": 100,
         "max_dte": None,
-        "start": 14,
-        "end": 13,
+        "start": 20,
+        "end": 19,
         "limit": 5000,  # 1 - 5000
         "min_dte": None,
     }
@@ -32,12 +29,12 @@ def get_lse_request_params(set_type: str) -> dict:
         "num_requests": 1,
         "underlying": "AAPL",
         "type": None,
-        "min_premium": 10,
+        "min_premium": 100,
         "max_dte": None,
-        "start": 6,
-        "end": 5,
-        "limit": 2000, # 1 - 5000
-        "min_dte": 100,
+        "start": 7,
+        "end": 6,
+        "limit": 5000,  # 1 - 5000
+        "min_dte": None,
     }
 
     if set_type == "test":
@@ -70,8 +67,3 @@ def is_in_filtered_cols(col_name: str) -> bool:
         output = True
 
     return output
-
-
-def compute_utc_dates(num_days: int) -> str:
-    date = (datetime.now(timezone.utc) - timedelta(days=num_days)).strftime("%Y-%m-%d")
-    return date

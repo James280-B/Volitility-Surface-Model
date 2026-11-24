@@ -6,7 +6,7 @@ import logging
 from typing import cast
 
 from scr.utils.csv_handler import CSVHandler
-from scr.parameters.data_builder_params import get_lse_request_params, compute_utc_dates, is_in_filtered_cols
+from scr.parameters.data_builder_params import is_in_filtered_cols
 from scr.utils.fin_utils import Finance
 from scr.utils.errors import SkipError
 from scr.instruments.risk_free_rate import RiskFreeRate
@@ -24,23 +24,21 @@ class LSEDataBuilder:
         csv = CSVHandler()
 
         input_data_df = pd.DataFrame()
-        lse_params_dd = get_lse_request_params(set_type)
+        lse_params_ss = csv.get_model_data_params(model_name=set_type)
 
-        start_int = lse_params_dd['start']
-        end_int = lse_params_dd['end']
-        start_date = compute_utc_dates(start_int)
-        end_date = compute_utc_dates(end_int)
+        initial_start_date = lse_params_ss["start_date"].values
+        initial_end_date = lse_params_ss["end_date"].values
 
-        for i in range(lse_params_dd["num_requests"]):
+        for i in range(lse_params_ss["num_days"]):
             raw_data_df = csv.request_lse_raw_options_flow_to_csv(
-                request_params_dd=lse_params_dd,
-                start_date=start_date,
-                end_date=end_date,
+                request_params_ss=lse_params_ss,
+                start_date=initial_start_date,
+                end_date=initial_end_date,
             )
             if raw_data_df.empty:
                 self.logger.warning("No data found for requested date")
                 continue
-            self.logger.info("Request LSE data from {} to {}".format(start_date, end_date))
+            self.logger.info("Request LSE data from {} to {}".format(initial_start_date, initial_end_date))
 
             cleaned_unfiltered_df = self._clean_raw_options_flow_data(raw_data_df=raw_data_df)
             filtered_df = self._filter_non_arb_options(cleaned_data_df=cleaned_unfiltered_df)
@@ -48,27 +46,24 @@ class LSEDataBuilder:
             input_data_df_single_request = self._clean_filtered_data(filtered_data_df=filtered_df)
             input_data_df = pd.concat([input_data_df, input_data_df_single_request])
 
-            start_int += 1
-            end_int += 1
-
-            start_date = compute_utc_dates(start_int)
-            end_date = compute_utc_dates(end_int)
-
         if set_type == "test":
             input_data_df = input_data_df.drop(
                 columns=["delta_call", "gamma_call", "theta_call", "underlying_price_call", "vega_call",
                          "delta_put", "gamma_put", "theta_put", "ts_put", "underlying_price_put", "vega_put",
-                         "dte_call", "expiry_call", "ticker_call", "dte_put", "expiry_put", "ticker_put"])
+                         "expiry_call", "ticker_call", "dte_put", "expiry_put", "ticker_put"])
+
             csv.save_test_data(input_data_df)
+            self.logger.info("Test data successfully created")
         else:
             csv.save_input_data(input_data_df)
-        self.logger.info("Input data successfully created")
+            self.logger.info("Input data successfully created")
 
     @staticmethod
     def _clean_raw_options_flow_data(raw_data_df: pd.DataFrame) -> pd.DataFrame:
         dropped_cols_df = raw_data_df.drop(columns=["premium", "size", "symbol", "venue"])  # drop uncessary cols
         dropped_cols_df = dropped_cols_df.replace('', np.nan, inplace=True)
         dropped_cols_df = dropped_cols_df.dropna()
+        dropped_cols_df = dropped_cols_df.drop_duplicates()
         dropped_cols_df["expiry"] = pd.to_datetime(dropped_cols_df["expiry"], format="%Y-%m-%d")
         dropped_cols_df["ts"] = pd.to_datetime(dropped_cols_df["ts"],
                                                format="%Y-%m-%dT%H:%M:%S.%fZ")  # TODO MIGHT BE REDUNDENT

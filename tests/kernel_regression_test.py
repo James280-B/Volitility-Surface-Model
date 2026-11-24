@@ -3,14 +3,17 @@ from scr.models.vol_surface_model.kernel_regression_model import OneDKernelRegre
 from scr.utils.logging_config import setup_logger
 from scr.models.lse_data_builder.data_builder import LSEDataBuilder
 
-#builder = LSEDataBuilder()
-#builder.build_input_data("test")
+builder = LSEDataBuilder()
+builder.build_input_data("test")
+builder.build_input_data("large")
 
 csv = CSVHandler()
 setup_logger()
 
 test_df = csv.read_test_data_csv("test.csv")
 input_df = csv.read_input_model_data()
+csv.save_data_summary(input_df=input_df, file_name="input_data_summary.csv")
+csv.save_data_summary(input_df=test_df, file_name="test_data_summary.csv")
 
 test_tag = "test_1"
 

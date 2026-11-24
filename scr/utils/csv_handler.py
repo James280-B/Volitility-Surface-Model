@@ -12,29 +12,29 @@ class CSVHandler:
         self.INPUT_MODEL_DATA_PATH = read_environment_variables("INPUT_MODEL_DATA_PATH")
         self.OUTPUT_MODEL_PATH = read_environment_variables("OUTPUT_MODEL_PATH")
         self.RAW_LSE_DATA_PATH = read_environment_variables("RAW_LSE_DATA_PATH")
-        self._OIS_CURVE_DATA_PATH = read_environment_variables("OIS_CURVE_DATA_PATH")
         self._TEST_DATA_PATH = read_environment_variables("TEST_DATA_PATH")
 
         self._OUTPUT_FILE_NAME = "okr_iv_output"
         self._INPUT_DATA_FILE_NAME = "input_data"
         self._OIS_CURVE_DATA_FILE_NAME = "ois_curve_data"
         self._TEST_OUTPUT_FILE_NAME = "test_output"
+        self._MODEL_PARAMS_FILE = "model_params.csv"
 
     def request_lse_raw_options_flow_to_csv(
             self,
-            request_params_dd: dict,
+            request_params_ss: pd.DataFrame,
             start_date: str,
             end_date: str,
     ) -> pd.DataFrame:
         client = LSE(self._LSE_API_KEY)
-        option_flow_data = client.options_flow(underlying=request_params_dd["underlying"],
-                                               type=request_params_dd["type"],
-                                               min_premium=request_params_dd["min_premium"],
-                                               max_dte=request_params_dd["max_dte"],
+        option_flow_data = client.options_flow(underlying=request_params_ss["underlying"],
+                                               type=request_params_ss["type"],
+                                               min_premium=request_params_ss["min_premium"],
+                                               max_dte=request_params_ss["max_dte"],
                                                start=start_date,
                                                end=end_date,
-                                               limit=request_params_dd["limit"],
-                                               min_dte=request_params_dd["min_dte"])
+                                               limit=request_params_ss["limit"],
+                                               min_dte=request_params_ss["min_dte"])
 
         option_flow_data_df = pd.DataFrame(option_flow_data)
 
@@ -59,7 +59,7 @@ class CSVHandler:
             file_tag: str
     ) -> pd.DataFrame:
         file_name = f"{self._OIS_CURVE_DATA_FILE_NAME}_{file_tag}.json"
-        folder_path = os.path.join(self._OIS_CURVE_DATA_PATH, file_name)
+        folder_path = os.path.join(self.INPUT_MODEL_DATA_PATH, file_name)
         df = pd.read_json(folder_path)
         curve_ls = df["curve"].tolist()
         output_df = pd.DataFrame(curve_ls)
@@ -112,9 +112,16 @@ class CSVHandler:
     def save_data_summary(
             self,
             input_df: pd.DataFrame,
+            file_name: str,
     ) -> None:
-        total_maturities = input_df["dte_call"].nunique()
-        total_strikes = input_df["strike"].nunique()
+        if "dte_call" in input_df.columns:
+            total_maturities = input_df["dte_call"].nunique()
+        else:
+            total_maturities = None
+        if "strike" in input_df.columns:
+            total_strikes = input_df["strike"].nunique()
+        else:
+            total_strikes = None
 
         data_summary_dd = {
             "num_option_pairs": input_df.shape[0],
@@ -126,6 +133,19 @@ class CSVHandler:
         }
 
         df = pd.DataFrame(data_summary_dd, index=[0])
-        folder_path = os.path.join(self.INPUT_MODEL_DATA_PATH, "data_summary.csv")
+        folder_path = os.path.join(self.INPUT_MODEL_DATA_PATH, file_name)
 
         df.to_csv(folder_path, index=False)
+
+    def get_model_data_params(
+            self,
+            model_name: str,
+    ) -> pd.DataFrame:
+        file_path = f"{self.INPUT_MODEL_DATA_PATH}"
+        folder_path = os.path.join(file_path, self._MODEL_PARAMS_FILE)
+
+        df = pd.read_csv(folder_path)
+
+        model_params_df = df[df["model_name"] == model_name]
+
+        return model_params_df
